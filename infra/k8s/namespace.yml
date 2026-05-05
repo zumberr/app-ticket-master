@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ticket-platform
+  labels:
+    app: ticket-platform
+    env: production
