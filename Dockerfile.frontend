@@ -1,0 +1,42 @@
+# ===========================================
+# Dockerfile para el Frontend (Flutter Web)
+# Plataforma de Gestión de Tickets Estudiantiles
+# ===========================================
+
+# ---- Etapa 1: Build ----
+FROM ghcr.io/cirruslabs/flutter:stable AS builder
+
+WORKDIR /app
+
+# Copiar dependencias y archivos de configuración
+COPY pubspec.yaml pubspec.lock ./
+RUN flutter pub get
+
+# Copiar código fuente
+COPY . .
+
+# Compilar para web en modo release
+RUN flutter build web --release
+
+# ---- Etapa 2: Servidor web (Nginx) ----
+FROM nginx:alpine AS production
+
+LABEL maintainer="Sanada Tech <devops@sanadatech.com>"
+LABEL description="Frontend Web - Gestión de Tickets Estudiantiles"
+
+# Eliminar configuración por defecto y copiar la nuestra
+RUN rm /etc/nginx/conf.d/default.conf
+COPY infra/nginx/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copiar archivos compilados desde la etapa de build
+COPY --from=builder /app/build/web /usr/share/nginx/html
+
+# Configurar permisos y healthcheck
+RUN chown -R nginx:nginx /usr/share/nginx/html
+
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]
