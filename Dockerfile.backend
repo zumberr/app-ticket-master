@@ -1,0 +1,56 @@
+# ===========================================
+# Dockerfile para el Backend (Node.js + Express)
+# Plataforma de Gestión de Tickets Estudiantiles
+# ===========================================
+
+# ---- Etapa 1: Dependencias ----
+FROM node:20-alpine AS dependencies
+
+WORKDIR /app
+
+# Copiar archivos de dependencias primero para aprovechar cache de Docker
+COPY backend/package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+# ---- Etapa 2: Builder (desarrollo y testing) ----
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY backend/package*.json ./
+RUN npm ci
+
+COPY backend/ ./
+RUN npm run build 2>/dev/null || echo "No build script defined"
+
+# ---- Etapa 3: Producción ----
+FROM node:20-alpine AS production
+
+LABEL maintainer="Sanada Tech <devops@sanadatech.com>"
+LABEL description="Backend API - Gestión de Tickets Estudiantiles"
+
+# Crear usuario no-root para seguridad
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+WORKDIR /app
+
+# Variables de entorno por defecto
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV LOG_LEVEL=info
+
+# Copiar solo lo necesario desde etapas anteriores
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=builder /app ./
+
+# Ajustar permisos
+RUN chown -R nodejs:nodejs /app
+USER nodejs
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000/health', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))"
+
+CMD ["node", "src/index.js"]

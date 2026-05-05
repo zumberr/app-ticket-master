@@ -1,0 +1,29 @@
+# ===========================================
+# Docker Compose Override - Producción
+# ===========================================
+
+version: "3.9"
+
+services:
+  backend:
+    image: ghcr.io/zumberr/app-ticket-master-frontend:latest
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: warn
+      CORS_ORIGIN: https://tickets.sanadatech.com
+      RATE_LIMIT_MAX_REQUESTS: 100
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+
+  nginx:
+    profiles:
+      - default
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/nginx/ssl:/etc/nginx/ssl:ro
