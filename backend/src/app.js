@@ -24,9 +24,12 @@ const app = express();
 
 // Seguridad
 app.use(helmet());
+const configuredOrigins = (process.env.CORS_ORIGIN || '').split(',').map(origin => origin.trim()).filter(Boolean);
+const corsOrigin = configuredOrigins.length > 0 ? configuredOrigins : false;
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
-  credentials: true
+  origin: corsOrigin,
+  credentials: configuredOrigins.length > 0,
+  optionsSuccessStatus: 204
 }));
 
 // Rate Limiting

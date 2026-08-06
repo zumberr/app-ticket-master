@@ -21,7 +21,9 @@ const generateToken = (userId) => {
  * @returns {Object} Usuario creado y token
  */
 const register = async (userData) => {
-  const { email, password, firstName, lastName, studentId, role } = userData;
+  const { email, password, firstName, lastName, studentId } = userData;
+  // Public registration must never grant privileged roles.
+  const role = 'student';
 
   // Verificar si el email ya existe
   const existingEmail = await User.findOne({ email });

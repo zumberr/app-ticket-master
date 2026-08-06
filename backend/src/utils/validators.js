@@ -28,9 +28,15 @@ const authValidators = {
       .notEmpty().withMessage('El ID de estudiante es requerido')
       .isLength({ min: 5, max: 20 }).withMessage('El ID de estudiante debe tener entre 5 y 20 caracteres')
       .matches(/^[a-zA-Z0-9-]+$/).withMessage('El ID de estudiante solo puede contener letras, números y guiones'),
-    body('role')
-      .optional()
-      .isIn(['student', 'admin', 'support']).withMessage('Rol no válido')
+  ],
+  changePassword: [
+    body('currentPassword').isLength({ min: 1 }).withMessage('La contraseña actual es requerida'),
+    body('newPassword')
+      .isLength({ min: 8 }).withMessage('La contraseña debe tener al menos 8 caracteres')
+      .matches(/[A-Z]/).withMessage('La contraseña debe contener al menos una mayúscula')
+      .matches(/[a-z]/).withMessage('La contraseña debe contener al menos una minúscula')
+      .matches(/[0-9]/).withMessage('La contraseña debe contener al menos un número')
+      .matches(/[^A-Za-z0-9]/).withMessage('La contraseña debe contener al menos un carácter especial')
   ],
   login: [
     body('email')
